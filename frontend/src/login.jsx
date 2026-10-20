@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import "./Login.css";
+import "./login.css";
 
 const API = "http://localhost:5000";
 

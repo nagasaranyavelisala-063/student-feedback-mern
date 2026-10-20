@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import "./Student.css";
 
-const API = "http://localhost:5000";
+const API = "https://student-feedback-mern.onrender.com";
 
 const emptyRating = {
   rating: 0,

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import "./login.css";
 
-const API = "http://localhost:5000";
+const API = "https://student-feedback-mern.onrender.com";
 
 export default function Login({ onLogin }) {
   const [role, setRole] = useState("student");

@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./Admin.css";
 
-const API = "http://localhost:5000";
+const API = "https://student-feedback-mern.onrender.com";
 
 const Icon = ({ name, size = 22 }) => {
   const paths = {

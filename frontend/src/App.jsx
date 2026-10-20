@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import login from "./login.jsx";
+import Login from "./login.jsx";
 import Student from "./Student";
 import Admin from "./Admin";
 import "./App.css";
@@ -10,7 +10,7 @@ export default function App() {
     sessionStorage.getItem("role") || ""
   );
 
-  function login(selectedRole, rollNo = "") {
+  function handleLogin(selectedRole, rollNo = "") {
     sessionStorage.setItem("role", selectedRole);
 
     if (rollNo) {
@@ -44,7 +44,7 @@ export default function App() {
         </header>
       )}
 
-      {!role && <Login onLogin={login} />}
+      {!role && <Login onLogin={handleLogin} />}
       {role === "student" && <Student />}
       {role === "admin" && <Admin />}
     </div>

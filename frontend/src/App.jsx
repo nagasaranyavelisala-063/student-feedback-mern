@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import Login from "./Login";
+import Login from "./login.jsx";
 import Student from "./Student";
 import Admin from "./Admin";
 import "./App.css";

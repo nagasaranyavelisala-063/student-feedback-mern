@@ -34,6 +34,14 @@ const number = value => Number(value || 0);
 
 const rating = value => number(value).toFixed(1);
 
+const ALL_BRANCHES = [
+  "CSE", "ECE", "EEE", "ME", "CIVIL", "IT",
+  "AIML", "AIDS", "DS", "CSM", "CSD", "CS",
+  "AG", "BT"
+];
+
+const ALL_YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
+
 export default function Admin({ onLogout }) {
   const [data, setData] = useState(null);
   const [allFeedback, setAllFeedback] = useState([]);
@@ -94,15 +102,9 @@ export default function Admin({ onLogout }) {
     loadDashboard();
   }, []);
 
-  const branches = useMemo(
-    () => [...new Set(allFeedback.map(item => item.branch).filter(Boolean))].sort(),
-    [allFeedback]
-  );
-
-  const years = useMemo(
-    () => [...new Set(allFeedback.map(item => item.year).filter(Boolean))].sort(),
-    [allFeedback]
-  );
+  // Show every configured branch and year, even when no feedback exists yet.
+  const branches = ALL_BRANCHES;
+  const years = ALL_YEARS;
 
   const filteredFeedback = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -166,32 +168,61 @@ export default function Admin({ onLogout }) {
   }, [filteredFeedback]);
 
   function exportCSV() {
-    const rows = filteredFeedback.map(item => ({
-      Branch: item.branch,
-      Year: item.year,
-      Faculty: item.teacher || item.faculty || "",
-      Rating: item.rating,
-      Teaching: item.teaching_quality,
-      Explanation: item.explanation,
-      Interaction: item.interaction,
-      Student: item.anonymous ? "Anonymous" : (item.roll_no || "Not provided"),
-      Comment: item.comment || "",
-      Date: item.created_at ? new Date(item.created_at).toLocaleString() : ""
+    // Group multiple faculty responses under one student Roll No.
+    const grouped = new Map();
+
+    filteredFeedback.forEach((item, index) => {
+      const isAnonymous = Boolean(item.anonymous);
+      const rollNo = isAnonymous ? "" : String(item.roll_no || "").trim();
+      const key = rollNo
+        ? `student:${rollNo}`
+        : `anonymous:${item._id || index}`;
+
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          "Roll No": isAnonymous ? "Anonymous" : (rollNo || "Not provided"),
+          Branch: item.branch || "",
+          Year: item.year || "",
+          "Faculty Feedback": [],
+          Comment: [],
+          Dates: []
+        });
+      }
+
+      const row = grouped.get(key);
+      row["Faculty Feedback"].push(
+        `${item.teacher || item.faculty || "Unknown"} - Rating: ${item.rating ?? ""}/5, Teaching: ${item.teaching_quality ?? ""}/5, Explanation: ${item.explanation ?? ""}/5, Interaction: ${item.interaction ?? ""}/5`
+      );
+
+      if (item.comment) row.Comment.push(item.comment);
+      if (item.created_at) {
+        row.Dates.push(new Date(item.created_at).toLocaleString());
+      }
+    });
+
+    const rows = [...grouped.values()].map(row => ({
+      "Roll No": row["Roll No"],
+      Branch: row.Branch,
+      Year: row.Year,
+      "Faculty Feedback": row["Faculty Feedback"].join(" | "),
+      Comment: row.Comment.join(" | "),
+      Date: row.Dates.join(" | ")
     }));
 
     const escapeCSV = value =>
       `"${String(value ?? "").replace(/"/g, '""')}"`;
 
-    const csv = [
-      Object.keys(rows[0] || {
-        Branch: "", Year: "", Faculty: "", Rating: "",
-        Teaching: "", Explanation: "", Interaction: "",
-        Student: "", Comment: "", Date: ""
-      }).join(","),
-      ...rows.map(row => Object.values(row).map(escapeCSV).join(","))
-    ].join("\r\n");
+    const headers = [
+      "Roll No", "Branch", "Year",
+      "Faculty Feedback", "Comment", "Date"
+    ];
 
-    const blob = new Blob(["\uFEFF" + csv], {
+    const csv = [
+      headers.map(escapeCSV).join(","),
+      ...rows.map(row => headers.map(header => escapeCSV(row[header])).join(","))
+    ].join("\\r\\n");
+
+    const blob = new Blob(["\\uFEFF" + csv], {
       type: "text/csv;charset=utf-8;"
     });
 
